@@ -1,3 +1,4 @@
+import React from "react";
 import Header from "./components/Header";
 import Drawer from "./components/Drawer";
 import Card from "./components/Card";
@@ -14,10 +15,11 @@ let arr = [
 ]
 
 
-
 function App() {
   return (
+
     <div className="wrapper clear">
+
       {/* drawer start */}
 
       <Drawer />
@@ -41,11 +43,9 @@ function App() {
             title={value.title}
             price={value.price}
             imageUrl={value.imageUrl}
-            onClick={() => console.log(value)} />))
+            onFavorite={() => console.log("Нажали favorite")}
+          />))
           }
-
-
-
         </div>
       </div>
 
