@@ -4,28 +4,33 @@ import Drawer from "./components/Drawer";
 import Card from "./components/Card";
 
 
-let arr = [
-  { title: "Мужские Кроссовки Nike Blazer Mid Suede", price: 12999, imageUrl: "/img/sneakers/sneaker-1.png" },
-  { title: "Мужские Кроссовки Nike Air Max 270", price: 12999, imageUrl: "/img/sneakers/sneaker-2.png" },
-  { title: "Мужские Кроссовки Nike Blazer Mid Suede", price: 8499, imageUrl: "/img/sneakers/sneaker-3.png" },
-  { title: "Кроссовки Puma X Aka Boku Future Rider", price: 8999, imageUrl: "/img/sneakers/sneaker-4.png" },
-  { title: "Мужские Кроссовки Under Armour Curry 8", price: 15099, imageUrl: "/img/sneakers/sneaker-5.png" },
-  { title: "Мужские Кроссовки Nike Kyrie 7", price: 11299, imageUrl: "/img/sneakers/sneaker-3.png" },
-  { title: "Мужские Кроссовки Jordan Air Jordan 11", price: 10799, imageUrl: "/img/sneakers/sneaker-5.png" },
-]
-
 
 function App() {
+  const [items, setItems] = React.useState([])
+  const [cartItems, setCartItems] = React.useState([])
+  const [cartOpened, setCardOpened] = React.useState(false);
+
+  React.useEffect(() => {
+    fetch('https://65f299f3034bdbecc76546bc.mockapi.io/items').then(res => {
+      return res.json();
+    }).then(json => {
+      setItems(json)
+    })
+  }, []);
+
+  const onAddToCart = (obj) => {
+    setCartItems(prev => [...prev, obj])
+  }
+
+  console.log(cartItems)
+
   return (
 
     <div className="wrapper clear">
 
-      {/* drawer start */}
+      {cartOpened && <Drawer items={cartItems} onClose={() => setCardOpened(false)} />}
 
-      <Drawer />
-      {/* drawer end */}
-
-      <Header />
+      <Header onClickCart={() => setCardOpened(true)} />
 
       {/* sneakers content start */}
       <div className="content p-40">
@@ -39,13 +44,13 @@ function App() {
 
         <div className="sneakers d-flex">
 
-          {arr.map((value) => (<Card
+          {items.map((value) => (<Card
             title={value.title}
             price={value.price}
             imageUrl={value.imageUrl}
             onFavorite={() => console.log("Нажали favorite")}
-          />))
-          }
+            onPlus={(obj) => onAddToCart(obj)}
+          />))}
         </div>
       </div>
 
