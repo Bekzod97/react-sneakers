@@ -1,59 +1,112 @@
 import React from "react";
+import { Routes, Route, Link } from 'react-router-dom';
+import axios from "axios";
 import Header from "./components/Header";
 import Drawer from "./components/Drawer";
-import Card from "./components/Card";
+import Home from "./pages/Home";
+import Favorites from "./pages/Favorites";
 
 
 
 function App() {
-  const [items, setItems] = React.useState([])
-  const [cartItems, setCartItems] = React.useState([])
+  const [items, setItems] = React.useState([]);
+  const [cartItems, setCartItems] = React.useState([]);
+  const [favorites, setFavorites] = React.useState([]);
+  const [searchValue, setSearchValue] = React.useState("");
   const [cartOpened, setCardOpened] = React.useState(false);
 
   React.useEffect(() => {
-    fetch('https://65f299f3034bdbecc76546bc.mockapi.io/items').then(res => {
-      return res.json();
-    }).then(json => {
-      setItems(json)
-    })
+
+    async function fetchData() {
+
+      const cartResponse = await axios.get('https://de27ff5173a008d1.mokky.dev/cart');
+      const favoritesResponse = await axios.get('https://de27ff5173a008d1.mokky.dev/favorites');
+      const itemsResponse = await axios.get('https://de27ff5173a008d1.mokky.dev/items');
+
+      setItems(itemsResponse.data);
+      setCartItems(cartResponse.data);
+      setFavorites(favoritesResponse.data);
+    }
+    fetchData();
+
   }, []);
 
   const onAddToCart = (obj) => {
-    setCartItems(prev => [...prev, obj])
+
+    if (cartItems.find(item => Number(item.id) == Number(obj.id))) {
+      axios.delete(`https://de27ff5173a008d1.mokky.dev/cart/${obj.id}`)
+      setCartItems(prev => prev.filter(item => Number(item.id) !== Number(obj.id)))
+    } else {
+      axios.post('https://de27ff5173a008d1.mokky.dev/cart', obj)
+      setCartItems(prev => [...prev, obj])
+    }
+
+    console.log(obj);
   }
 
-  console.log(cartItems)
+  const onRemoveItem = (id) => {
+    axios.delete(`https://de27ff5173a008d1.mokky.dev/cart/${id}`)
+    setCartItems((prev) => prev.filter(item => item.id !== id))
+  }
+
+  const onAddToFavorite = async (obj) => {
+
+    try {
+      if (favorites.find(favObj => favObj.id === obj.id)) {
+        axios.delete(`https://de27ff5173a008d1.mokky.dev/favorites/${obj.id}`)
+      } else {
+        const { data } = await axios.post("https://de27ff5173a008d1.mokky.dev/favorites", obj)
+
+        setFavorites(prev => [...prev, data])
+      }
+    } catch (error) {
+      alert("Не удалось добавить в favorites")
+    }
+  }
+
+  const onChangeSearchInput = (event) => {
+
+    setSearchValue(event.target.value)
+
+  }
+
+  const onChangeInputKey = (event) => {
+    if (event.key == "Escape") {
+      setSearchValue("");
+    }
+  }
 
   return (
 
     <div className="wrapper clear">
 
-      {cartOpened && <Drawer items={cartItems} onClose={() => setCardOpened(false)} />}
+      {cartOpened && <Drawer items={cartItems} onClose={() => setCardOpened(false)}
+        onRemove={onRemoveItem} />}
 
       <Header onClickCart={() => setCardOpened(true)} />
 
+
+
       {/* sneakers content start */}
-      <div className="content p-40">
-        <div className="d-flex justify-between align-center mb-40">
-          <h1>Все кроссовки</h1>
-          <div className="search-block d-flex align-center">
-            <img width={14} height={14} src="/img/search.svg" alt="search" />
-            <input type="text" placeholder="Поиск" />
-          </div>
-        </div>
 
-        <div className="sneakers d-flex">
+      <Routes>
+        <Route path="/"
+          element={
+            <Home
+              items={items}
+              cartItems={cartItems}
+              searchValue={searchValue}
+              setSearchValue={setSearchValue}
+              onAddToFavorite={onAddToFavorite}
+              onAddToCart={onAddToCart}
+              onChangeInputKey={onChangeInputKey}
+              onChangeSearchInput={onChangeSearchInput}
 
-          {items.map((value) => (<Card
-            title={value.title}
-            price={value.price}
-            imageUrl={value.imageUrl}
-            onFavorite={() => console.log("Нажали favorite")}
-            onPlus={(obj) => onAddToCart(obj)}
-          />))}
-        </div>
-      </div>
+            />} />
 
+        <Route path="/Favorites" element={<Favorites items={favorites} onAddToFavorite={onAddToFavorite} />} />
+
+      </Routes>
       {/* sneakers content end */}
     </div>
   );
